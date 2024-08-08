@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const app = express();
 const bodyParser = require('body-parser');
 const cookiePerser = require('cookie-parser');
+const errorHandler = require('./Utils/errorHandler');
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 
@@ -34,7 +35,7 @@ app.use('*', (req, res, next) => {
 	next(`${baseUrl} Not Found!`);
 });
 
-// app.use(errorHandler);
+app.use(errorHandler);
 
 app.listen(port, () => {
 	console.log(`Server is running port: ${port}`);
