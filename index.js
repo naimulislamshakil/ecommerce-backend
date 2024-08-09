@@ -8,6 +8,9 @@ const errorHandler = require('./Utils/errorHandler');
 const port = process.env.PORT || 5000;
 require('dotenv').config();
 
+// import route
+const userRoute = require('./Router/v1/UserAuth.Router');
+
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(
@@ -27,6 +30,9 @@ mongoose
 app.get('/', (req, res) => {
 	res.send('<h1>How are you?</h1>');
 });
+
+// call all route
+app.use('/api/v1/user', userRoute);
 
 app.use('*', (req, res, next) => {
 	const { baseUrl } = req;
