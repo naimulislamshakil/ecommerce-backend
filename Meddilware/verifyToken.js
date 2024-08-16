@@ -1,3 +1,4 @@
+const ApiError = require('../Utils/ApiError');
 const asyncHandler = require('../Utils/asyncHendeler');
 const jwt = require('jsonwebtoken');
 

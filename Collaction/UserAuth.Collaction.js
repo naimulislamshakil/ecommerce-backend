@@ -110,3 +110,15 @@ exports.loginUserCollaction = asyncHandler(async (req, res, next) => {
 			)
 		);
 });
+
+exports.getUser = asyncHandler(async (req, res) => {
+	const { id, email } = req.user;
+
+	const user = await UserModel.findById({ _id: id }).select(
+		'-password -refreshToken'
+	);
+
+	return res
+		.status(200)
+		.json(new ApiResponse(200, { user }, 'User fetched successfully'));
+});
