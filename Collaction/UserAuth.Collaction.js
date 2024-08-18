@@ -3,6 +3,11 @@ const ApiError = require('../Utils/ApiError');
 const ApiResponse = require('../Utils/ApiResponce');
 const asyncHandler = require('../Utils/asyncHendeler');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const {
+	generateAccessToken,
+	generateRefreshToken,
+} = require('../Utils/GenerateAccess&refresh');
 
 exports.createUserCollaction = asyncHandler(async (req, res) => {
 	// What is the main step for craete a user:
@@ -40,10 +45,10 @@ exports.createUserCollaction = asyncHandler(async (req, res) => {
 // generate token
 const generateAccessAndRefreshToken = async (userId) => {
 	try {
-		const user = await UserModel.findById({ _id: userId });
+		const user = await UserModel.findById(userId);
 
-		const accessToken = user.generateAccessToken();
-		const refreshToken = user.generateRefreshToken();
+		const accessToken = generateAccessToken(user?._id, user?.email);
+		const refreshToken = generateRefreshToken(user?._id);
 
 		user.refreshToken = refreshToken;
 		user.save({ validateBeforeSave: false });
@@ -121,4 +126,56 @@ exports.getUser = asyncHandler(async (req, res) => {
 	return res
 		.status(200)
 		.json(new ApiResponse(200, { user }, 'User fetched successfully'));
+});
+
+exports.refreshAccessToken = asyncHandler(async (req, res) => {
+	const incommingToken = req.cookies?.refreshToken;
+
+	if (!incommingToken) {
+		throw new ApiError(401, 'Unauthorized Access!!');
+	}
+
+	try {
+		const decoded = await jwt.verify(
+			incommingToken,
+			process.env.REFRESH_TOKENSECRET_KEY
+		);
+
+		const user = await UserModel.findById(decoded.id);
+
+		if (!user) {
+			throw new ApiError(401, 'Invalid Access!!');
+		}
+
+		if (incommingToken !== user?.refreshToken) {
+			throw new ApiError(401, 'Unauthorized Access!!');
+		}
+
+		const userForClient = await UserModel.findById(user?._id).select(
+			'-password -refreshToken'
+		);
+
+		const option = {
+			httpOnly: true,
+			secure: true,
+		};
+
+		const { accessToken, refreshToken: newRefreshToken } =
+			await generateAccessAndRefreshToken(user?._id);
+
+		return res
+			.status(200)
+			.cookie('accessToken', accessToken, option)
+			.cookie('refreshToken', newRefreshToken, option)
+			.json(
+				new ApiResponse(
+					200,
+					{ userForClient, accessToken, refreshToken: newRefreshToken },
+					'Valid User!!'
+				)
+			);
+	} catch (error) {
+		console.log({ error });
+		throw new ApiError(401, 'Invalid Access!!');
+	}
 });
