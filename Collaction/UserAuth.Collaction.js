@@ -179,3 +179,24 @@ exports.refreshAccessToken = asyncHandler(async (req, res) => {
 		throw new ApiError(401, 'Invalid Access!!');
 	}
 });
+
+exports.logout = asyncHandler(async (req, res) => {
+	const { id } = req.user;
+
+	await UserModel.findByIdAndUpdate(id, {
+		$unset: {
+			refreshToken: 1,
+		},
+	});
+
+	const option = {
+		httpOnly: true,
+		secure: true,
+	};
+
+	return res
+		.status(200)
+		.clearCookie('accessToken', option)
+		.clearCookie('refreshToken', option)
+		.json(new ApiResponse(200, {}, 'User logged Out'));
+});

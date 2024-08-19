@@ -12,5 +12,6 @@ Router.post('/register', createUserCollaction);
 Router.post('/login', loginUserCollaction);
 Router.get('/current_user', verifyToken, getUser);
 Router.post('/refresh_token', refreshAccessToken);
+Router.post('/logout', refreshAccessToken);
 
 module.exports = Router;
